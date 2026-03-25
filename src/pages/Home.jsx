@@ -1,10 +1,14 @@
 import { useState, useEffect, useContext } from 'react'
+import { useLocation } from 'react-router-dom' // Wichtig für den State-Empfang
 import ThemeContext from '../context/ThemeContext'
 import SearchBar from '../components/SearchBar'
 import WeatherCard from '../components/WeatherCard'
+import LoadingSpinner from '../components/LoadingSpinner'
 
 function Home() {
   const { istDunkel } = useContext(ThemeContext)
+  const location = useLocation()
+  
   const [city, setCity] = useState(() => {
     return localStorage.getItem('lastCity') || ''
   })
@@ -12,10 +16,19 @@ function Home() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
+  // 1. Effekt: Prüfen, ob wir von der Favoriten-Seite kommen
+  useEffect(() => {
+    if (location.state && location.state.gewaehlteStadt) {
+      setCity(location.state.gewaehlteStadt)
+    }
+  }, [location.state])
+
+  // 2. Effekt: Stadt im localStorage speichern
   useEffect(() => {
     if (city) localStorage.setItem('lastCity', city)
   }, [city])
 
+  // 3. Effekt: Wetter-Daten fetchen
   useEffect(() => {
     async function fetchWeather() {
       if (!city) return
@@ -23,7 +36,7 @@ function Home() {
       setError(null)
 
       try {
-        const API_KEY = import.meta.env.VITE_WEATHER_API_KEY
+        const API_KEY = "36b02c5fa5a7143d3c294f2556f8e894";
         const res = await fetch(
           `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}&units=metric&lang=de`
         )
@@ -51,14 +64,16 @@ function Home() {
         <span className="text-blue-500">Wetter</span> suchen
       </h1>
       <SearchBar onSearch={setCity} />
-      {loading && <p className="text-center mt-4 text-blue-500">Laden...</p>}
-      {error && <p className="text-center mt-4 text-red-500">{error}</p>}
-      {weatherData && !loading && <WeatherCard data={weatherData} />}
-      {!weatherData && !loading && !error && (
-        <p className={`text-center mt-12 ${istDunkel ? 'text-gray-500' : 'text-gray-400'}`}>
-          Stadt eingeben und suchen
+      
+      {loading && <LoadingSpinner />}
+      
+      {error && (
+        <p className="text-center mt-4 text-red-500 bg-red-100 p-2 rounded">
+          {error}
         </p>
       )}
+      
+      {weatherData && !loading && <WeatherCard data={weatherData} />}
     </div>
   )
 }

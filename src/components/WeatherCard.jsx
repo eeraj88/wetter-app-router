@@ -1,25 +1,61 @@
-import { useContext } from 'react'
+import { useContext, useState, useEffect } from 'react'
 import ThemeContext from '../context/ThemeContext'
 
 function WeatherCard({ data }) {
   const { istDunkel } = useContext(ThemeContext)
+  const [istFavorit, setIstFavorit] = useState(false)
+
+  // Prüfen, ob die aktuelle Stadt bereits ein Favorit ist
+  useEffect(() => {
+    const favs = JSON.parse(localStorage.getItem('wetter-favoriten') || '[]')
+    setIstFavorit(favs.includes(data.name))
+  }, [data.name])
+
+  const toggleFavorit = () => {
+    const favs = JSON.parse(localStorage.getItem('wetter-favoriten') || '[]')
+    let neueFavs
+
+    if (favs.includes(data.name)) {
+      // Entfernen, wenn schon drin
+      neueFavs = favs.filter(stadt => stadt !== data.name)
+      setIstFavorit(false)
+    } else {
+      // Hinzufügen, wenn noch nicht drin
+      neueFavs = [...favs, data.name]
+      setIstFavorit(true)
+    }
+
+    localStorage.setItem('wetter-favoriten', JSON.stringify(neueFavs))
+  }
 
   return (
-    <div className={`mt-8 p-6 rounded-2xl shadow-lg ${
+    <div className={`mt-8 p-6 rounded-2xl shadow-lg relative ${
       istDunkel ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-900'
     }`}>
-      <h2 className="text-2xl font-bold mb-2">{data.name}, {data.sys.country}</h2>
+      {/* Favoriten-Button oben rechts */}
+      <button 
+        onClick={toggleFavorit}
+        className="absolute top-4 right-4 text-2xl transition-transform hover:scale-125"
+      >
+        {istFavorit ? '❤️' : '🤍'}
+      </button>
+
+      <h2 className="text-2xl font-bold mb-2 text-center">{data.name}, {data.sys.country}</h2>
+      
       <img
         src={`https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`}
         alt={data.weather[0].description}
         className="w-24 h-24 mx-auto"
       />
+      
       <p className="text-5xl font-bold text-center my-2">{Math.round(data.main.temp)}°C</p>
+      
       <p className={`text-lg capitalize text-center mb-4 ${
         istDunkel ? 'text-gray-300' : 'text-gray-600'
       }`}>
         {data.weather[0].description}
       </p>
+
       <div className={`flex justify-around pt-4 border-t ${
         istDunkel ? 'border-gray-700' : 'border-gray-200'
       }`}>
@@ -30,10 +66,6 @@ function WeatherCard({ data }) {
         <div className="text-center">
           <p className={`text-sm ${istDunkel ? 'text-gray-400' : 'text-gray-500'}`}>Wind</p>
           <p className="text-xl font-semibold">{Math.round(data.wind.speed * 3.6)} km/h</p>
-        </div>
-        <div className="text-center">
-          <p className={`text-sm ${istDunkel ? 'text-gray-400' : 'text-gray-500'}`}>Gefuehlt</p>
-          <p className="text-xl font-semibold">{Math.round(data.main.feels_like)}°C</p>
         </div>
       </div>
     </div>

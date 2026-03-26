@@ -36,7 +36,7 @@ function Home() {
       setError(null)
 
       try {
-        const API_KEY = "36b02c5fa5a7143d3c294f2556f8e894";
+        const API_KEY = import.meta.env.VITE_WEATHER_API_KEY;
         const res = await fetch(
           `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}&units=metric&lang=de`
         )
